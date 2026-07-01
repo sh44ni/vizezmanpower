@@ -6,7 +6,6 @@ config({ path: '.env' })
 config()
 
 export default defineConfig({
-  earlyAccess: true,
   schema: path.join(__dirname, 'prisma/schema.prisma'),
   datasource: {
     url: process.env.ACCOUNTS_DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/vizezmanpower_accounts_db',
