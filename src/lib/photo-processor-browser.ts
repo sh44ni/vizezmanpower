@@ -105,9 +105,10 @@ async function calculateFaceAwareCrop(
       const box = result.detections[0].boundingBox!
 
       // Passport padding around detected face box
+      // padTop: hair above eyebrows + small gap; padBottom: chin + short neck only
       const padTop    = box.height * 0.35  // forehead + hair
-      const padBottom = box.height * 0.80  // neck + top of shoulders
-      const padSide   = box.width  * 0.25  // left/right margins
+      const padBottom = box.height * 0.25  // chin + short neck — NO body
+      const padSide   = box.width  * 0.20  // left/right margins
 
       let cropTop    = Math.max(0, box.originY - padTop)
       let cropBottom = Math.min(imgH, box.originY + box.height + padBottom)

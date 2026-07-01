@@ -80,9 +80,9 @@ export async function cropAndEnhancePhotoSharp(
 
     if (!imgW || !imgH) throw new Error('Could not read image dimensions');
 
-    // Heuristic crop: centre 65% width, upper 55% height (head+shoulders region)
+    // Heuristic crop: centre 65% width, upper 45% height (head+short neck only)
     const cropW = Math.floor(imgW * 0.65);
-    const cropH = Math.floor(imgH * 0.55);
+    const cropH = Math.floor(imgH * 0.45);
     const cropX = Math.floor((imgW - cropW) / 2);
     const cropY = Math.floor(imgH * 0.01);
 
