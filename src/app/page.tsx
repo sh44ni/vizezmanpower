@@ -1,11 +1,15 @@
-import ManpowerApp from "@/components/ManpowerApp";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import LandingPage from "@/components/LandingPage";
 
-// Pure Server Component — no props, no functions, no client state here.
-// All client-side logic lives in ManpowerApp ("use client").
-export default function Home() {
-  return (
-    <main className="min-h-screen bg-[#050507]">
-      <ManpowerApp />
-    </main>
-  );
+/**
+ * Root route — server-side auth gate.
+ * - Session present  → redirect to /dashboard (no flash, no client JS needed)
+ * - No session       → render the marketing landing page
+ */
+export default async function Home() {
+  const session = await getSession();
+  if (session) redirect("/dashboard");
+
+  return <LandingPage />;
 }

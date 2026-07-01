@@ -54,8 +54,14 @@ export async function proxy(req: NextRequest) {
     return NextResponse.next()
   }
 
+  // ── Public routes (landing page) — no auth required ──
+  const isPublicRoute = pathname === '/'
+  if (isPublicRoute) {
+    return NextResponse.next()
+  }
+
   // ── Protect everything else (main tool + dashboard) ──
-  // This covers '/', '/dashboard', etc.
+  // This covers '/dashboard', etc.
   if (!session) {
     const url = new URL('/login', req.url)
     url.searchParams.set('redirect', pathname)
