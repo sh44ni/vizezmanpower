@@ -20,41 +20,7 @@ import {
   Shield,
 } from "lucide-react";
 import AutoSubmitModal from "@/components/AutoSubmitModal";
-
-/* ─── Passport field display labels ─── */
-const PASSPORT_LABELS: Record<string, string> = {
-  surname: "Surname",
-  first_name: "First Name",
-  second_name: "Second Name",
-  third_name: "Third Name",
-  fourth_name: "Fourth Name",
-  passport_number: "Passport No.",
-  issue_date: "Issue Date",
-  place_of_issue: "Place of Issue",
-  expiry_date: "Expiry Date",
-  passport_country: "Issuing Country",
-  nationality: "Nationality",
-  date_of_birth: "Date of Birth",
-  city_of_birth: "City of Birth",
-  country_of_birth: "Country of Birth",
-  gender: "Gender",
-  mother_name: "Mother Name",
-  issuing_state: "Issuing State",
-};
-
-const WP_LABELS: Record<string, string> = {
-  sponsor_name: "Sponsor / Employer",
-  civil_id: "Civil ID",
-  phone_number: "Phone Number",
-  mobile_number: "Mobile Number",
-  address: "Address",
-  relationship: "Relationship",
-  occupation_code: "Occupation Code",
-  occupation_description: "Occupation",
-  pa_number: "PA Number",
-  wfpa_number: "WFPA Number",
-  expiry_date: "Permit Expiry",
-};
+import { useLanguage } from "@/lib/language";
 
 /* ─── Copy button ─── */
 function CopyBtn({ value }: { value: string }) {
@@ -85,9 +51,10 @@ interface EditableFieldProps {
   value: string;
   originalValue: string;
   onChange: (val: string) => void;
+  editedLabel: string;
 }
 
-function EditableField({ label, value, originalValue, onChange }: EditableFieldProps) {
+function EditableField({ label, value, originalValue, onChange, editedLabel }: EditableFieldProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -125,7 +92,7 @@ function EditableField({ label, value, originalValue, onChange }: EditableFieldP
         {isEdited && (
           <div className="flex items-center gap-1">
             <span className="text-[9px] uppercase tracking-wider font-bold text-amber-400 bg-amber-400/10 border border-amber-400/25 px-1.5 py-0.5 rounded-full">
-              Edited
+              {editedLabel}
             </span>
             <button
               onClick={resetToOriginal}
@@ -195,9 +162,45 @@ function EditableField({ label, value, originalValue, onChange }: EditableFieldP
 
 /* ─── Main Component ─── */
 export default function ReviewStep({ items, setItems, onClear }: any) {
+  const { t, isRTL } = useLanguage();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"passport" | "workpermit">("passport");
+
+  // Build passport/work-permit field label maps from translations
+  const PASSPORT_LABELS: Record<string, string> = {
+    surname: t('pf_surname'),
+    first_name: t('pf_first_name'),
+    second_name: t('pf_second_name'),
+    third_name: t('pf_third_name'),
+    fourth_name: t('pf_fourth_name'),
+    passport_number: t('pf_passport_number'),
+    issue_date: t('pf_issue_date'),
+    place_of_issue: t('pf_place_of_issue'),
+    expiry_date: t('pf_expiry_date'),
+    passport_country: t('pf_passport_country'),
+    nationality: t('pf_nationality'),
+    date_of_birth: t('pf_date_of_birth'),
+    city_of_birth: t('pf_city_of_birth'),
+    country_of_birth: t('pf_country_of_birth'),
+    gender: t('pf_gender'),
+    mother_name: t('pf_mother_name'),
+    issuing_state: t('pf_issuing_state'),
+  };
+
+  const WP_LABELS: Record<string, string> = {
+    sponsor_name: t('wp_sponsor_name'),
+    civil_id: t('wp_civil_id'),
+    phone_number: t('wp_phone_number'),
+    mobile_number: t('wp_mobile_number'),
+    address: t('wp_address'),
+    relationship: t('wp_relationship'),
+    occupation_code: t('wp_occupation_code'),
+    occupation_description: t('wp_occupation_description'),
+    pa_number: t('wp_pa_number'),
+    wfpa_number: t('wp_wfpa_number'),
+    expiry_date: t('wp_expiry_date'),
+  };
 
   // Track original AI-extracted values for reset-to-original capability
   const [originals] = useState<Record<string, any>>(() => {
@@ -301,41 +304,41 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
                 </p>
                 <div className="flex items-center gap-2 mt-1.5 flex-wrap">
                   <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 px-1.5 py-0.5 rounded-full">
-                    <CheckCircle2 className="w-3 h-3" /> MRZ OK
+                    <CheckCircle2 className="w-3 h-3" /> {t('step_review_mrz_ok')}
                   </span>
                   {hasWP && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold text-[var(--accent)] bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-1.5 py-0.5 rounded-full">
-                      <FileText className="w-3 h-3" /> WP
+                      <FileText className="w-3 h-3" /> {t('step_review_tab_wp')}
                     </span>
                   )}
                   {item.photoPreviewUrl && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold text-sky-400 bg-sky-400/10 border border-sky-400/20 px-1.5 py-0.5 rounded-full">
-                      <Camera className="w-3 h-3" /> Photo
+                      <Camera className="w-3 h-3" /> {t('step_upload_photo_label')}
                     </span>
                   )}
                   {editedCount > 0 && (
                     <span className="flex items-center gap-1 text-[10px] font-semibold text-amber-400 bg-amber-400/10 border border-amber-400/20 px-1.5 py-0.5 rounded-full">
-                      <Pencil className="w-3 h-3" /> {editedCount} edit{editedCount !== 1 ? "s" : ""}
+                      <Pencil className="w-3 h-3" /> {editedCount} {editedCount !== 1 ? t('step_review_edits_plural') : t('step_review_edits')}
                     </span>
                   )}
                 </div>
               </div>
 
-              <ChevronRight className="w-5 h-5 text-white/20 group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-all flex-shrink-0" />
+              <ChevronRight className={`w-5 h-5 text-white/20 group-hover:text-[var(--accent)] group-hover:translate-x-0.5 transition-all flex-shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
             </div>
 
             {/* Card footer strip */}
             <div className="px-4 py-2.5 bg-black/20 border-t border-white/[0.04] flex items-center gap-6">
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-white/30 mb-0.5 font-semibold">DOB</p>
+                <p className="text-[9px] uppercase tracking-wider text-white/30 mb-0.5 font-semibold">{t('pf_date_of_birth')}</p>
                 <p className="text-xs text-white/70 font-medium">{item.passportData?.date_of_birth || "—"}</p>
               </div>
               <div>
-                <p className="text-[9px] uppercase tracking-wider text-white/30 mb-0.5 font-semibold">Expiry</p>
+                <p className="text-[9px] uppercase tracking-wider text-white/30 mb-0.5 font-semibold">{t('pf_expiry_date')}</p>
                 <p className="text-xs text-white/70 font-medium">{item.passportData?.expiry_date || "—"}</p>
               </div>
               <div className="flex-1" />
-              <p className="text-[10px] text-white/25 font-medium">Tap to review →</p>
+              <p className="text-[10px] text-white/25 font-medium">{t('step_review_tap')}</p>
             </div>
           </div>
         );
@@ -358,8 +361,8 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
           onClick={() => setSelectedId(null)}
           className="text-[var(--accent)] text-sm font-semibold flex items-center gap-1.5 hover:gap-2.5 transition-all w-fit group"
         >
-          <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
-          All applicants
+          <ArrowLeft className={`w-4 h-4 group-hover:-translate-x-0.5 transition-transform ${isRTL ? 'rotate-180' : ''}`} />
+          {t('step_review_back')}
         </button>
 
         {/* Header card */}
@@ -377,13 +380,13 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <h3 className="text-white font-bold text-lg leading-tight truncate font-['Outfit']">
+            <h3 className="text-white font-bold text-lg leading-tight truncate" style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : "var(--font-outfit), sans-serif" }}>
               {selectedItem.passportData?.first_name} {selectedItem.passportData?.surname}
             </h3>
             <p className="text-white/50 text-sm mt-0.5">{selectedItem.passportData?.passport_number}</p>
             <div className="flex items-center gap-1.5 mt-2">
               <Shield className="w-3.5 h-3.5 text-emerald-400" />
-              <span className="text-[11px] text-emerald-400 font-semibold">MRZ Verified</span>
+              <span className="text-[11px] text-emerald-400 font-semibold">{t('step_review_mrz_verified')}</span>
             </div>
           </div>
         </div>
@@ -392,7 +395,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
         <div className="flex items-center gap-2 bg-[var(--accent)]/5 border border-[var(--accent)]/15 rounded-2xl px-4 py-2.5">
           <Pencil className="w-3.5 h-3.5 text-[var(--accent)]/70 flex-shrink-0" />
           <p className="text-[12px] text-white/50 leading-snug">
-            <span className="text-[var(--accent)]/80 font-semibold">Tap any field to edit</span> — changes are saved instantly before submission.
+            <span className="text-[var(--accent)]/80 font-semibold">{t('step_review_edit_hint')}</span> {t('step_review_edit_hint_sub')}
           </p>
         </div>
 
@@ -406,7 +409,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
                 : "text-white/40 hover:text-white/60"
             }`}
           >
-            <User className="w-4 h-4" /> Passport
+            <User className="w-4 h-4" /> {t('step_review_tab_passport')}
           </button>
           <button
             onClick={() => setActiveTab("workpermit")}
@@ -416,7 +419,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
                 : "text-white/40 hover:text-white/60"
             }`}
           >
-            <FileText className="w-4 h-4" /> Work Permit
+            <FileText className="w-4 h-4" /> {t('step_review_tab_wp')}
           </button>
         </div>
 
@@ -424,7 +427,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
         {activeTab === "passport" && (
           <div className="bg-[rgba(255,255,255,0.03)] border border-white/[0.08] rounded-[22px] p-5 backdrop-blur-xl">
             <div className="text-[11px] uppercase tracking-wider text-[var(--accent)] font-bold pb-3 mb-1 border-b border-white/[0.06] flex items-center gap-2">
-              <User className="w-3.5 h-3.5" /> Passport Data
+              <User className="w-3.5 h-3.5" /> {t('step_review_passport_data')}
             </div>
             {passportEntries.map(([key, val]) => (
               <EditableField
@@ -433,6 +436,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
                 value={val as string}
                 originalValue={orig.passportData?.[key] ?? (val as string)}
                 onChange={(newVal) => updatePassportField(selectedItem.id, key, newVal)}
+                editedLabel={t('step_review_edited')}
               />
             ))}
           </div>
@@ -444,7 +448,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
             {hasWP ? (
               <div className="bg-[rgba(255,255,255,0.03)] border border-white/[0.08] rounded-[22px] p-5 backdrop-blur-xl">
                 <div className="text-[11px] uppercase tracking-wider text-emerald-400 font-bold pb-3 mb-1 border-b border-white/[0.06] flex items-center gap-2">
-                  <FileText className="w-3.5 h-3.5" /> Work Permit Data
+                  <FileText className="w-3.5 h-3.5" /> {t('step_review_wp_data')}
                 </div>
                 {wpEntries.map(([key, val]) => (
                   <EditableField
@@ -453,6 +457,7 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
                     value={val as string}
                     originalValue={orig.workPermitData?.[key] ?? (val as string)}
                     onChange={(newVal) => updateWorkPermitField(selectedItem.id, key, newVal)}
+                    editedLabel={t('step_review_edited')}
                   />
                 ))}
               </div>
@@ -460,8 +465,8 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
               <div className="bg-amber-400/[0.04] border border-amber-400/20 rounded-2xl p-6 flex flex-col items-center gap-3 text-center">
                 <AlertTriangle className="w-8 h-8 text-amber-400/60" />
                 <div>
-                  <p className="text-amber-400/90 font-semibold text-sm">No work permit data</p>
-                  <p className="text-white/30 text-xs mt-1">No work permit was uploaded or extracted for this applicant.</p>
+                  <p className="text-amber-400/90 font-semibold text-sm">{t('step_review_no_wp')}</p>
+                  <p className="text-white/30 text-xs mt-1">{t('step_review_no_wp_sub')}</p>
                 </div>
               </div>
             )}
@@ -472,15 +477,17 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full" dir={isRTL ? "rtl" : "ltr"} style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : undefined }}>
       {/* Header */}
       <div className="mb-6 flex items-center justify-between flex-shrink-0">
         <div>
-          <h2 className="text-3xl font-bold text-white mb-1 font-['Outfit'] tracking-tight">Review</h2>
+          <h2 className="text-3xl font-bold text-white mb-1 tracking-tight" style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : "var(--font-outfit), sans-serif" }}>
+            {t('step_review_title')}
+          </h2>
           <p className="text-sm text-white/50">
             {selectedId
-              ? "Verify & edit extracted data"
-              : `${extracted.length} applicant${extracted.length !== 1 ? "s" : ""} ready`}
+              ? t('step_review_sub_detail')
+              : `${extracted.length} ${t('step_review_sub_list')}`}
           </p>
         </div>
         {!selectedId && (
@@ -507,10 +514,10 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
               onClick={() => setIsModalOpen(true)}
               className="w-full py-4 rounded-2xl font-bold text-[15px] bg-[var(--accent)] text-white flex items-center justify-center gap-2 shadow-[var(--accent-glow)] hover:bg-[var(--accent-hover)] transition-colors active:scale-[0.97]"
             >
-              <Zap className="w-5 h-5 fill-white" /> Auto Submit to ROP
+              <Zap className="w-5 h-5 fill-white" /> {t('step_review_submit')}
             </button>
             <p className="text-center text-[11px] text-white/25 mt-2">
-              Review each applicant above before submitting
+              {t('step_review_hint')}
             </p>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Outfit, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, Outfit, Cairo } from "next/font/google";
 import { LanguageProvider } from "@/lib/language";
 import "./globals.css";
 
@@ -18,10 +18,12 @@ const outfit = Outfit({
   subsets: ["latin"],
 });
 
-const ibmArabic = IBM_Plex_Sans_Arabic({
+// Cairo — a premium, beautiful Arabic (and Latin) font
+const cairo = Cairo({
   variable: "--font-arabic",
-  subsets: ["arabic"],
-  weight: ["300", "400", "500", "600", "700"],
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -48,7 +50,7 @@ export default function RootLayout({
     <html
       lang="en"
       dir="ltr"
-      className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${ibmArabic.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} ${cairo.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col overflow-x-hidden">
         <LanguageProvider>{children}</LanguageProvider>

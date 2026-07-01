@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Database, AlertCircle, ArrowRight, Check, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useLanguage } from "@/lib/language";
 
 export default function ExtractStep({ items, setItems, onNext, selectedModel, addLog }: any) {
+  const { t, isRTL } = useLanguage();
   const [progress, setProgress] = useState(0);
   const [isProcessing, setIsProcessing] = useState(true);
 
@@ -86,16 +88,16 @@ export default function ExtractStep({ items, setItems, onNext, selectedModel, ad
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative" dir={isRTL ? "rtl" : "ltr"} style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : undefined }}>
       {/* Header */}
       <div className="mb-7 flex-shrink-0">
-        <h2 className="text-3xl font-bold text-white mb-2 font-['Outfit'] tracking-tight">
-          {allDone ? "Extraction Complete" : "Extracting"}
+        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight" style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : "var(--font-outfit), sans-serif" }}>
+          {allDone ? t('step_extract_title_done') : t('step_extract_title')}
         </h2>
         <p className="text-sm text-white/50">
           {allDone
-            ? `${extractedCount} extracted${errorCount > 0 ? ` · ${errorCount} error${errorCount !== 1 ? "s" : ""}` : ""}`
-            : "Analyzing documents with Vision AI"}
+            ? `${extractedCount} ${t('step_extract_success')}${errorCount > 0 ? ` · ${errorCount} ${t('step_extract_failed')}` : ""}`
+            : t('step_extract_sub')}
         </p>
       </div>
 
@@ -138,12 +140,12 @@ export default function ExtractStep({ items, setItems, onNext, selectedModel, ad
         </div>
 
         {/* Percentage */}
-        <div className="text-4xl font-bold text-white font-['Outfit'] tracking-tight mb-1 relative z-10">
+        <div className="text-4xl font-bold text-white tracking-tight mb-1 relative z-10" style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : "var(--font-outfit), sans-serif" }}>
           {Math.round(progress)}
           <span className="text-2xl text-white/40">%</span>
         </div>
         <p className="text-sm text-white/50 relative z-10">
-          {!allDone ? "Processing passports..." : hasErrors ? "Completed with errors" : "All documents extracted"}
+          {!allDone ? t('step_extract_processing') : hasErrors ? t('step_extract_errors') : t('step_extract_completed')}
         </p>
 
         {/* Shimmer bar */}
@@ -176,16 +178,16 @@ export default function ExtractStep({ items, setItems, onNext, selectedModel, ad
                 {item.status === "pending" && (
                   <span className="text-white/35 flex items-center gap-1">
                     <span className="w-1 h-1 rounded-full bg-white/25 animate-pulse inline-block" />
-                    Queued
+                    {t('step_extract_queued')}
                   </span>
                 )}
                 {item.status === "extracted" && (
                   <span className="text-emerald-400 font-medium">
-                    Passport{item._wpExtracted ? " + Work Permit" : ""} extracted
+                    {t('step_upload_passport_ready')}{item._wpExtracted ? ` + ${t('step_upload_wp_label')}` : ""} {t('step_extract_success')}
                   </span>
                 )}
                 {item.status === "error" && (
-                  <span className="text-red-400 font-medium">Failed to extract</span>
+                  <span className="text-red-400 font-medium">{t('step_extract_failed')}</span>
                 )}
               </p>
             </div>
@@ -224,8 +226,8 @@ export default function ExtractStep({ items, setItems, onNext, selectedModel, ad
                 : "bg-white/5 text-white/30"
             }`}
           >
-            {hasErrors ? "Review with Errors" : "Review Results"}{" "}
-            <ArrowRight className="w-5 h-5" />
+            {hasErrors ? t('step_extract_review_errors') : t('step_extract_review')}{" "}
+            <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </div>

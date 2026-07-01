@@ -30,18 +30,15 @@ interface DashboardClientProps {
   initials: string
 }
 
-function UpgradeModal({ onClose }: { onClose: () => void }) {
+function UpgradeModal({ onClose, t }: { onClose: () => void; t: (k: string) => string }) {
   return (
     <div className="upgrade-modal-overlay" onClick={onClose}>
       <div className="upgrade-modal" onClick={e => e.stopPropagation()}>
-        {/* Close button */}
         <button className="upgrade-modal-close" onClick={onClose} aria-label="Close">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
-
-        {/* Icon */}
         <div className="upgrade-modal-icon-wrap">
           <div className="upgrade-modal-icon">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -49,35 +46,16 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
             </svg>
           </div>
         </div>
-
-        {/* Content */}
-        <h2 className="upgrade-modal-title">Upgrade Your Plan</h2>
-        <p className="upgrade-modal-desc">
-          Unlock more submissions, premium features, and priority support. 
-          Contact us on WhatsApp to upgrade your account instantly.
-        </p>
-
-        {/* Features */}
+        <h2 className="upgrade-modal-title">{t('upgrade_title')}</h2>
+        <p className="upgrade-modal-desc">{t('upgrade_desc')}</p>
         <div className="upgrade-modal-features">
-          <div className="upgrade-feature-item">
-            <span className="upgrade-feature-check">✓</span>
-            <span>Unlimited monthly submissions</span>
-          </div>
-          <div className="upgrade-feature-item">
-            <span className="upgrade-feature-check">✓</span>
-            <span>Priority processing & support</span>
-          </div>
-          <div className="upgrade-feature-item">
-            <span className="upgrade-feature-check">✓</span>
-            <span>Advanced automation features</span>
-          </div>
-          <div className="upgrade-feature-item">
-            <span className="upgrade-feature-check">✓</span>
-            <span>Dedicated account manager</span>
-          </div>
+          {[t('upgrade_f1'), t('upgrade_f2'), t('upgrade_f3'), t('upgrade_f4')].map((f, i) => (
+            <div key={i} className="upgrade-feature-item">
+              <span className="upgrade-feature-check">✓</span>
+              <span>{f}</span>
+            </div>
+          ))}
         </div>
-
-        {/* WhatsApp CTA */}
         <a
           href="https://wa.me/923178328164?text=Hi%2C%20I%20want%20to%20upgrade%20my%20Vizez%20Manpower%20plan"
           target="_blank"
@@ -87,27 +65,31 @@ function UpgradeModal({ onClose }: { onClose: () => void }) {
           <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
             <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
           </svg>
-          Chat on WhatsApp
+          {t('upgrade_whatsapp')}
         </a>
-
-        <p className="upgrade-modal-note">Available 24/7 · Instant response</p>
+        <p className="upgrade-modal-note">{t('upgrade_note')}</p>
       </div>
     </div>
   )
 }
 
 export function DashboardClient({ user, usedCount, limit, pct, initials }: DashboardClientProps) {
-  const { t, lang } = useLanguage()
+  const { t, lang, isRTL } = useLanguage()
   const [showUpgrade, setShowUpgrade] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const features = user.plan?.features ?? []
+  const tr = (key: string) => { try { return t(key as any) } catch { return key } }
 
   return (
-    <div className="dashboard-page">
-      {/* Upgrade Modal */}
-      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} />}
+    <div
+      className="dashboard-page"
+      dir={isRTL ? 'rtl' : 'ltr'}
+      style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : undefined }}
+    >
+      {showUpgrade && <UpgradeModal onClose={() => setShowUpgrade(false)} t={tr} />}
 
-      {/* Nav */}
+      {/* ── Nav ── */}
       <nav className="dashboard-nav">
         {/* Logo */}
         <div className="dashboard-nav-logo-wrap">
@@ -126,25 +108,61 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
           <span className="dashboard-nav-manpower">MANPOWER</span>
         </div>
 
-        <div className="dashboard-nav-user">
+        {/* ── Desktop nav (hidden ≤640px) ── */}
+        <div className="dashboard-nav-user" style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <LangSwitcher />
-          {/* Upgrade Button */}
           <button
             className="upgrade-btn"
             onClick={() => setShowUpgrade(true)}
             id="btn-upgrade-plan"
           >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
               <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
             </svg>
-            Upgrade
+            {tr('upgrade_btn_label')}
           </button>
           <span className="dashboard-nav-agency">{user.agencyName}</span>
           <div className="dashboard-avatar">{initials}</div>
           <LogoutButton />
         </div>
+
+        {/* ── Mobile nav (visible ≤640px) ── */}
+        <div className="dash-mobile-actions">
+          <LangSwitcher />
+          <div className="dashboard-avatar">{initials}</div>
+          <button
+            className="dash-hamburger"
+            onClick={() => setMobileMenuOpen(v => !v)}
+            aria-label="Menu"
+          >
+            {mobileMenuOpen ? (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            ) : (
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            )}
+          </button>
+        </div>
       </nav>
 
+      {/* ── Mobile dropdown ── */}
+      {mobileMenuOpen && (
+        <div className="dash-mobile-menu" dir={isRTL ? 'rtl' : 'ltr'}>
+          <div style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>{user.agencyName}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: -4 }}>{user.email}</div>
+          <div style={{ height: 1, background: 'var(--border)', margin: '4px 0' }} />
+          <button
+            className="upgrade-btn"
+            style={{ width: '100%', justifyContent: 'center' }}
+            onClick={() => { setShowUpgrade(true); setMobileMenuOpen(false) }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            {tr('upgrade_btn_label')}
+          </button>
+          <LogoutButton />
+        </div>
+      )}
+
+      {/* ── Content ── */}
       <div className="dashboard-content">
         {/* Welcome */}
         <div className="dashboard-welcome">
@@ -153,7 +171,7 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
           <div className="dashboard-welcome-sub">{user.fullName} · {user.email}</div>
         </div>
 
-        {/* Cards */}
+        {/* Cards grid */}
         <div className="dashboard-cards">
           {/* Plan card */}
           <div className="dashboard-card" style={{ gridColumn: user.plan ? 'auto' : '1 / -1' }}>
@@ -166,9 +184,11 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
                 <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8 }}>
                   {user.plan.name}
                 </div>
-                <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
-                  {user.plan.description}
-                </p>
+                {user.plan.description && (
+                  <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 16, lineHeight: 1.5 }}>
+                    {user.plan.description}
+                  </p>
+                )}
                 {user.planExpiresAt && (
                   <div style={{ marginBottom: 12 }}>
                     <span className="badge badge--warn">
@@ -186,16 +206,13 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
                     ))}
                   </ul>
                 )}
-                {/* Upgrade nudge inside plan card */}
                 <button
                   className="plan-upgrade-nudge"
                   onClick={() => setShowUpgrade(true)}
                   id="btn-upgrade-in-plan"
                 >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                  </svg>
-                  Upgrade Plan
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  {tr('upgrade_plan_nudge')}
                 </button>
               </>
             ) : (
@@ -209,10 +226,8 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
                   onClick={() => setShowUpgrade(true)}
                   id="btn-upgrade-no-plan"
                 >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
-                  </svg>
-                  Get a Plan
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                  {tr('upgrade_get_plan')}
                 </button>
               </>
             )}
@@ -228,7 +243,7 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
               <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--text-primary)', lineHeight: 1 }}>
                 {usedCount}
                 <span style={{ fontSize: 16, fontWeight: 400, color: 'var(--text-muted)', marginLeft: 6 }}>
-                  / {limit ?? '\u221e'}
+                  / {limit ?? '∞'}
                 </span>
               </div>
               <div style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 4, marginBottom: 4 }}>
@@ -264,7 +279,7 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             {user.isActive && user.plan ? (
-              <Link href="/" className="admin-btn admin-btn--primary" style={{ textDecoration: 'none' }}>
+              <Link href="/app" className="admin-btn admin-btn--primary" style={{ textDecoration: 'none' }}>
                 {t('dash_open_app')} &rarr;
               </Link>
             ) : (
@@ -302,8 +317,7 @@ export function DashboardClient({ user, usedCount, limit, pct, initials }: Dashb
             <span className="detail-val">
               {user.isActive
                 ? <span className="badge badge--success">{t('dash_status_active')}</span>
-                : <span className="badge badge--warn">{t('dash_status_pending')}</span>
-              }
+                : <span className="badge badge--warn">{t('dash_status_pending')}</span>}
             </span>
           </div>
           <div className="detail-row">

@@ -22,12 +22,17 @@ const LanguageContext = createContext<LanguageContextValue>({
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>('en')
 
-  // Hydrate from localStorage on mount
+  // Hydrate from localStorage or browser language on mount
   useEffect(() => {
     try {
       const stored = localStorage.getItem('vizez-lang') as Lang | null
       if (stored === 'ar' || stored === 'en') {
         setLangState(stored)
+      } else {
+        const browserLang = navigator.language || (navigator as any).userLanguage
+        if (browserLang.startsWith('ar')) {
+          setLangState('ar')
+        }
       }
     } catch {}
   }, [])

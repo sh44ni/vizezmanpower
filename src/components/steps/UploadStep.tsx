@@ -4,12 +4,14 @@ import React, { useRef, useState } from "react";
 import { ManualVisaItem } from "@/app/types";
 import { UploadCloud, X, ArrowRight, Plus, Camera, FileText, CheckCircle2, RefreshCw, Loader2 } from "lucide-react";
 import { processApplicantPhoto } from "@/lib/photo-processor-browser";
+import { useLanguage } from "@/lib/language";
 
 function resetInput(el: HTMLInputElement | null) {
   if (el) el.value = "";
 }
 
 export default function UploadStep({ items, setItems, onNext }: any) {
+  const { t, isRTL } = useLanguage();
   const mainInputRef = useRef<HTMLInputElement>(null);
   const fabInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -181,7 +183,6 @@ export default function UploadStep({ items, setItems, onNext }: any) {
       const result = await processApplicantPhoto(file);
       console.log(`[photo] mode=${result.mode} cropped=${result.wasCropped}`);
 
-
       setItems((prev: any) =>
         prev.map((item: any) =>
           item.id === id
@@ -221,14 +222,14 @@ export default function UploadStep({ items, setItems, onNext }: any) {
   };
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative" dir={isRTL ? "rtl" : "ltr"} style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : undefined }}>
       {/* Header */}
       <div className="mb-7 flex-shrink-0">
-        <h2 className="text-3xl font-bold text-white mb-2 font-['Outfit'] tracking-tight">
-          Upload Documents
+        <h2 className="text-3xl font-bold text-white mb-2 tracking-tight" style={{ fontFamily: isRTL ? 'var(--font-arabic), sans-serif' : "var(--font-outfit), sans-serif" }}>
+          {t('step_upload_title')}
         </h2>
         <p className="text-sm text-white/50">
-          Add passports to begin the extraction process.
+          {t('step_upload_sub')}
         </p>
       </div>
 
@@ -245,7 +246,7 @@ export default function UploadStep({ items, setItems, onNext }: any) {
               {/* Passport thumbnail — clickable to reselect */}
               <label
                 className="w-16 h-20 bg-black/50 rounded-xl overflow-hidden shrink-0 border border-white/10 shadow-inner relative cursor-pointer group"
-                title="Tap to change passport"
+                title={t('step_upload_tap_change')}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -276,9 +277,9 @@ export default function UploadStep({ items, setItems, onNext }: any) {
                 </h3>
                 <p className="text-white/40 text-xs mt-1 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-[var(--accent)] inline-block" />
-                  Passport ready
+                  {t('step_upload_passport_ready')}
                 </p>
-                <p className="text-white/25 text-[10px] mt-0.5">Tap photo to change</p>
+                <p className="text-white/25 text-[10px] mt-0.5">{t('step_upload_tap_change')}</p>
               </div>
 
               <button
@@ -295,7 +296,7 @@ export default function UploadStep({ items, setItems, onNext }: any) {
               {item.photoFile ? (
                 <label
                   className="relative flex items-center gap-2 cursor-pointer group"
-                  title={croppingIds.has(item.id) ? "Auto-cropping…" : "Tap to change photo"}
+                  title={croppingIds.has(item.id) ? t('step_upload_cropping') : t('step_upload_tap_change')}
                 >
                   {item.photoPreviewUrl && (
                     <div className="relative">
@@ -318,11 +319,11 @@ export default function UploadStep({ items, setItems, onNext }: any) {
                   )}
                   {croppingIds.has(item.id) ? (
                     <span className="flex items-center gap-1.5 text-xs text-white/50 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 font-medium">
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> Cropping…
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('step_upload_cropping')}
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20 font-medium group-hover:bg-emerald-400/20 transition-colors">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Photo
+                      <CheckCircle2 className="w-3.5 h-3.5" /> {t('step_upload_photo_label')}
                       <RefreshCw className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
                     </span>
                   )}
@@ -341,7 +342,7 @@ export default function UploadStep({ items, setItems, onNext }: any) {
                 </label>
               ) : (
                 <label className="relative flex items-center gap-2 text-xs text-white/60 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all font-medium cursor-pointer">
-                  <Camera className="w-3.5 h-3.5" /> Add Photo
+                  <Camera className="w-3.5 h-3.5" /> {t('step_upload_add_photo')}
                   <input
                     type="file"
                     accept="image/*"
@@ -359,10 +360,10 @@ export default function UploadStep({ items, setItems, onNext }: any) {
               {item.workPermitFile ? (
                 <label
                   className="relative flex items-center gap-2 cursor-pointer group"
-                  title="Tap to change work permit"
+                  title={t('step_upload_tap_change')}
                 >
                   <span className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-400/10 px-3 py-1.5 rounded-lg border border-emerald-400/20 font-medium group-hover:bg-emerald-400/20 transition-colors">
-                    <CheckCircle2 className="w-3.5 h-3.5" /> Work Permit
+                    <CheckCircle2 className="w-3.5 h-3.5" /> {t('step_upload_wp_label')}
                     <RefreshCw className="w-3 h-3 opacity-50 group-hover:opacity-100 transition-opacity" />
                   </span>
                   <input
@@ -378,7 +379,7 @@ export default function UploadStep({ items, setItems, onNext }: any) {
                 </label>
               ) : (
                 <label className="relative flex items-center gap-2 text-xs text-white/60 bg-white/5 px-3 py-1.5 rounded-lg border border-white/10 hover:bg-white/10 hover:text-white transition-all font-medium cursor-pointer">
-                  <FileText className="w-3.5 h-3.5" /> Add Work Permit
+                  <FileText className="w-3.5 h-3.5" /> {t('step_upload_add_wp')}
                   <input
                     type="file"
                     accept="image/*,application/pdf"
@@ -401,7 +402,7 @@ export default function UploadStep({ items, setItems, onNext }: any) {
             <span className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[var(--accent)]/20 transition-colors">
               <Plus className="w-4 h-4 text-white/40 group-hover:text-[var(--accent)] transition-colors" />
             </span>
-            Add another applicant
+            {t('step_upload_add_another')}
             <input
               ref={fabInputRef}
               type="file"
@@ -450,9 +451,9 @@ export default function UploadStep({ items, setItems, onNext }: any) {
                 />
               </div>
               <p className="text-white font-semibold mb-1.5 text-lg">
-                {dragging ? "Drop to upload" : "Tap to upload passports"}
+                {dragging ? t('step_upload_dropping') : t('step_upload_drop')}
               </p>
-              <p className="text-white/40 text-sm">JPG, PNG or PDF · Multiple files OK</p>
+              <p className="text-white/40 text-sm">{t('step_upload_types')}</p>
             </div>
           </label>
         )}
@@ -485,12 +486,12 @@ export default function UploadStep({ items, setItems, onNext }: any) {
                 : "bg-white/5 text-white/30"
             }`}
           >
-            Start Extraction <ArrowRight className="w-5 h-5" />
+            {t('step_upload_start')} <ArrowRight className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
           {items.length > 0 && (
             <p className="text-center text-[11px] text-white/25 mt-2">
-              {items.length} passport{items.length !== 1 ? "s" : ""} ready ·{" "}
-              {items.filter((x: any) => x.workPermitFile).length} with work permit
+              {items.length} {items.length !== 1 ? t('step_upload_count_plural') : t('step_upload_count')} ·{" "}
+              {items.filter((x: any) => x.workPermitFile).length} {t('step_upload_with_wp')}
             </p>
           )}
         </div>

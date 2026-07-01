@@ -99,9 +99,27 @@ html, body {
   overscroll-behavior-y: none; /* Prevent bounce on mobile */
 }
 
+/* Cairo font for Arabic — premium, beautiful */
+html[lang="ar"],
+html[dir="rtl"] {
+  font-family: var(--font-arabic), 'Cairo', 'Tajawal', system-ui, sans-serif !important;
+}
+html[dir="rtl"] body {
+  font-family: var(--font-arabic), 'Cairo', 'Tajawal', system-ui, sans-serif !important;
+}
+
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  font-family: var(--font-outfit), 'Outfit', 'Inter', system-ui, sans-serif;
   letter-spacing: -0.02em;
+}
+html[dir="rtl"] h1,
+html[dir="rtl"] h2,
+html[dir="rtl"] h3,
+html[dir="rtl"] h4,
+html[dir="rtl"] h5,
+html[dir="rtl"] h6 {
+  font-family: var(--font-arabic), 'Cairo', system-ui, sans-serif;
+  letter-spacing: 0;
 }
 
 /* ── Custom Scrollbar ── */
@@ -1858,6 +1876,72 @@ table.admin-table {
   top: 0;
   z-index: 40;
   box-shadow: 0 1px 0 rgba(215,172,78,0.08), 0 4px 24px rgba(0,0,0,0.4);
+}
+
+/* Desktop nav actions — hidden ≤640px */
+.dashboard-nav-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Mobile-only nav strip — hidden on desktop */
+.dash-mobile-actions {
+  display: none;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Hamburger button */
+.dash-hamburger {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+.dash-hamburger:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: var(--border-bright);
+  color: var(--text-primary);
+}
+
+/* Mobile dropdown */
+.dash-mobile-menu {
+  background: rgba(10,10,16,0.98);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 39;
+  animation: slide-down 0.2s ease;
+}
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ≤640px: swap desktop → mobile nav */
+@media (max-width: 640px) {
+  .dashboard-nav {
+    padding: 0 16px;
+    height: 56px;
+  }
+  .dashboard-nav-user { display: none !important; }
+  .dash-mobile-actions { display: flex; }
+  .dashboard-nav-svg { height: 22px; }
+  .dashboard-nav-manpower { font-size: 9px; letter-spacing: 2.5px; }
+  .dashboard-content { padding: 20px 16px; }
 }
 
 /* Logo wrapper */
