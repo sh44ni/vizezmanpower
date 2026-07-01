@@ -1,7 +1,9 @@
 import path from 'node:path'
 import { defineConfig } from 'prisma/config'
 import { PrismaPg } from '@prisma/adapter-pg'
-import 'dotenv/config'
+import { config } from 'dotenv'
+config({ path: '.env.local' })
+config()
 
 export default defineConfig({
   earlyAccess: true,

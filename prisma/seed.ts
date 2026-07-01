@@ -2,7 +2,9 @@ import { PrismaClient } from '@prisma/client'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import bcrypt from 'bcryptjs'
-import 'dotenv/config'
+import { config } from 'dotenv'
+config({ path: '.env.local' })
+config()
 
 const pool = new Pool({
   connectionString: process.env.ACCOUNTS_DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/vizez_accounts',
