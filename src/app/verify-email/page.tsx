@@ -11,6 +11,13 @@ import Link from 'next/link'
 const OTP_LENGTH = 6
 const RESEND_COOLDOWN = 60
 
+/** Map Arabic-Indic (\u0660-\u0669) and Extended Arabic-Indic (\u06f0-\u06f9) digits to Western 0-9 */
+function normalizeDigits(s: string): string {
+  return s
+    .replace(/[\u0660-\u0669]/g, d => String(d.charCodeAt(0) - 0x0660))
+    .replace(/[\u06f0-\u06f9]/g, d => String(d.charCodeAt(0) - 0x06f0))
+}
+
 function OtpVerifyContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -34,7 +41,7 @@ function OtpVerifyContent() {
   useEffect(() => { inputRefs.current[0]?.focus() }, [])
 
   const handleDigitChange = (index: number, value: string) => {
-    const sanitized = value.replace(/\D/g, '').slice(-1)
+    const sanitized = normalizeDigits(value).replace(/\D/g, '').slice(-1)
     const next = [...digits]
     next[index] = sanitized
     setDigits(next)
@@ -43,7 +50,7 @@ function OtpVerifyContent() {
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault()
-    const text = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, OTP_LENGTH)
+    const text = normalizeDigits(e.clipboardData.getData('text')).replace(/\D/g, '').slice(0, OTP_LENGTH)
     if (!text) return
     const next = [...digits]
     for (let i = 0; i < OTP_LENGTH; i++) next[i] = text[i] ?? ''
@@ -80,7 +87,10 @@ function OtpVerifyContent() {
       }
       setSuccess(true)
       toast.success(t('verify_success'))
-      setTimeout(() => router.push('/login?msg=email-verified'), 1500)
+      // Auto-login: API sets session cookie; go straight to dashboard
+      setTimeout(() => router.push(
+        data.redirectTo ?? '/dashboard'
+      ), 1200)
     } finally {
       setLoading(false)
     }

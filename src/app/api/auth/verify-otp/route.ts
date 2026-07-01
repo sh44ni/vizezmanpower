@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { checkRateLimit } from '@/lib/ratelimit'
+import { signToken, COOKIE_NAME, TOKEN_EXPIRY } from '@/lib/auth'
 
 const STANDARD_PLAN_ID = 'plan_standard'
 
@@ -41,7 +42,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Activate account instantly, assign Standard plan ──
-    await db.user.update({
+    const updatedUser = await db.user.update({
       where: { id: user.id },
       data: {
         emailVerified: true,
@@ -52,7 +53,28 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return NextResponse.json({ message: 'Email verified! Your account is now active.' })
+    // ── Create session cookie so the user lands on /dashboard directly ──
+    const token = await signToken({
+      sub: updatedUser.id,
+      email: updatedUser.email,
+      role: updatedUser.role as 'USER' | 'ADMIN',
+      isActive: true,
+    })
+
+    const res = NextResponse.json({
+      message: 'Email verified! Your account is now active.',
+      redirectTo: '/dashboard',
+    })
+
+    res.cookies.set(COOKIE_NAME, token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60, // 7 days (matches TOKEN_EXPIRY)
+    })
+
+    return res
   } catch (err) {
     console.error('[verify-otp]', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
