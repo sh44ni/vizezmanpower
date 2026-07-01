@@ -51,7 +51,8 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    const formatted = users.map(u => ({
+    type UserRow = (typeof users)[number]
+    const formatted = users.map((u: UserRow) => ({
       ...u,
       submissionsThisMonth: u.submissionUsage[0]?.count ?? 0,
       submissionUsage: undefined,
