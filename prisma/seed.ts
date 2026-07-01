@@ -7,13 +7,13 @@ config({ path: '.env' })
 config()
 
 const pool = new Pool({
-  connectionString: process.env.ACCOUNTS_DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/vizez_accounts',
+  connectionString: process.env.ACCOUNTS_DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/vizezmanpower_accounts_db',
 })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
 
 async function main() {
-  console.log('🌱 Seeding vizez_accounts database...')
+  console.log('🌱 Seeding vizezmanpower_accounts_db database...')
 
   // ── Standard Plan — 30 submissions/month ──
   const standardPlan = await prisma.plan.upsert({

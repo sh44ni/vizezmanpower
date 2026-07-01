@@ -2,14 +2,14 @@ import path from 'node:path'
 import { defineConfig } from 'prisma/config'
 import { PrismaPg } from '@prisma/adapter-pg'
 import { config } from 'dotenv'
-config({ path: '.env.local' })
+config({ path: '.env' })
 config()
 
 export default defineConfig({
   earlyAccess: true,
   schema: path.join(__dirname, 'prisma/schema.prisma'),
   datasource: {
-    url: process.env.ACCOUNTS_DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/vizez_accounts',
+    url: process.env.ACCOUNTS_DATABASE_URL ?? 'postgresql://postgres:postgres@localhost:5432/vizezmanpower_accounts_db',
   },
   migrate: {
     adapter: async () => {
