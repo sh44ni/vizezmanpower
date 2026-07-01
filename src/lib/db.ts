@@ -1,0 +1,25 @@
+import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
+import { Pool } from 'pg'
+
+const globalForPrisma = globalThis as unknown as {
+  prismaAccounts: PrismaClient | undefined
+}
+
+function createPrismaClient() {
+  if (!process.env.ACCOUNTS_DATABASE_URL) {
+    throw new Error('FATAL: ACCOUNTS_DATABASE_URL environment variable is not set.')
+  }
+  const pool = new Pool({
+    connectionString: process.env.ACCOUNTS_DATABASE_URL,
+  })
+  const adapter = new PrismaPg(pool)
+  return new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  })
+}
+
+export const db = globalForPrisma.prismaAccounts ?? createPrismaClient()
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prismaAccounts = db
