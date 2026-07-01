@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { AuthCard } from '@/components/auth/AuthCard'
@@ -8,7 +8,7 @@ import { FormField } from '@/components/auth/FormField'
 import { useLanguage } from '@/lib/language'
 import toast from 'react-hot-toast'
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { t } = useLanguage()
@@ -155,5 +155,13 @@ export default function LoginPage() {
         {t('login_no_account')} <Link href="/signup">{t('login_create')}</Link>
       </div>
     </AuthCard>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }
