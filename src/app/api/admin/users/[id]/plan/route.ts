@@ -25,6 +25,14 @@ export async function PUT(
       return NextResponse.json({ error: 'User not found' }, { status: 404 })
     }
 
+    // Verify the plan exists before assigning to avoid FK constraint errors
+    if (planId) {
+      const planExists = await db.plan.findUnique({ where: { id: planId } })
+      if (!planExists) {
+        return NextResponse.json({ error: 'Plan not found. Create plans in the admin panel first.' }, { status: 404 })
+      }
+    }
+
     const wasInactive = !existingUser.isActive
 
     const user = await db.user.update({
