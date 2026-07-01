@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   const pct = limit ? Math.min((usedCount / limit) * 100, 100) : 0
   const features = (user.plan?.features as string[]) ?? []
 
-  const initials = user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+  const initials = user.fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
 
   return (
     <>
