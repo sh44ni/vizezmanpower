@@ -55,15 +55,16 @@ function calculatePassportCrop(imgW: number, imgH: number): { sx: number; sy: nu
   const targetRatio = TARGET_W / TARGET_H
 
   if (imgW / imgH > targetRatio) {
-    // Wider than needed — crop width
-    const sw = Math.round(imgH * targetRatio)
+    // Wider than needed — center crop width, use top 75% of height for face region
+    const useH = Math.round(imgH * 0.75)
+    const sw = Math.round(useH * targetRatio)
     const sx = Math.round((imgW - sw) / 2)
-    return { sx, sy: 0, sw, sh: imgH }
+    return { sx, sy: 0, sw, sh: useH }
   } else {
-    // Taller than needed — show top 80% (head area)
-    const sh = Math.round(imgW / targetRatio)
-    const sy = Math.round(imgH * 0.05) // slight top offset to center face
-    return { sx: 0, sy: Math.min(sy, imgH - sh), sw: imgW, sh }
+    // Taller than needed (portrait) — take top 55% of height to show head+shoulders
+    const sh = Math.min(Math.round(imgH * 0.55), Math.round(imgW / targetRatio))
+    const sy = Math.round(imgH * 0.02) // tiny top offset
+    return { sx: 0, sy: Math.min(sy, imgH - sh), sw: imgW, sh: Math.min(sh, imgH) }
   }
 }
 

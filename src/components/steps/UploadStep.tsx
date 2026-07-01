@@ -206,7 +206,7 @@ export default function UploadStep({ items, setItems, onNext }: any) {
   const removeItem = (id: string) =>
     setItems((prev: any) => prev.filter((x: any) => x.id !== id));
 
-  const canProceed = items.length > 0 && items.every((x: any) => x.passportFile);
+  const canProceed = items.length > 0 && items.every((x: any) => x.passportFile) && croppingIds.size === 0;
 
   /* ── Drag-and-drop handlers for the empty zone ── */
   const onDragOver = (e: React.DragEvent) => {
