@@ -66,36 +66,63 @@ function applyPassportEnhancement(ctx: CanvasRenderingContext2D, w: number, h: n
   ctx.putImageData(imageData, 0, 0)
 }
 
-/** Simple heuristic crop — used only when face detection fails */
+/**
+ * Heuristic crop — used only when face detection fails.
+ *
+ * On a typical passport/ID photo submission the subject is centred and fills
+ * the upper portion of the frame.  We take the top-centre region that covers
+ * roughly the head + short neck and then enforce the 35:45 aspect ratio.
+ */
 function heuristicCrop(imgW: number, imgH: number): { sx: number; sy: number; sw: number; sh: number } {
-  const targetRatio = TARGET_W / TARGET_H
-  if (imgW / imgH > targetRatio) {
-    const useH = Math.round(imgH * 0.75)
-    const sw = Math.round(useH * targetRatio)
-    const sx = Math.round((imgW - sw) / 2)
-    return { sx, sy: 0, sw, sh: useH }
+  const targetRatio = TARGET_W / TARGET_H   // 35/45 ≈ 0.778
+
+  // Take 55% of the width centred, starting 3% from the top, for 50% of height.
+  // This reliably captures head + short neck on portrait shots.
+  const sw0 = Math.round(imgW * 0.55)
+  const sh0 = Math.round(imgH * 0.50)
+  const sx0 = Math.round((imgW - sw0) / 2)
+  const sy0 = Math.round(imgH * 0.03)
+
+  // Enforce 35:45 aspect ratio by expanding width — never expand down (adds body)
+  const naturalRatio = sw0 / sh0
+  let sw = sw0
+  let sh = sh0
+  if (naturalRatio < targetRatio) {
+    // Too tall → widen (expand horizontally, keep height)
+    sw = Math.round(sh * targetRatio)
   } else {
-    const sh = Math.min(Math.round(imgH * 0.55), Math.round(imgW / targetRatio))
-    const sy = Math.round(imgH * 0.02)
-    return { sx: 0, sy: Math.min(sy, imgH - sh), sw: imgW, sh: Math.min(sh, imgH) }
+    // Too wide → shorten height from bottom
+    sh = Math.round(sw / targetRatio)
   }
+
+  // Clamp to image bounds
+  const sx = Math.max(0, Math.min(imgW - sw, sx0))
+  const sy = Math.max(0, Math.min(imgH - sh, sy0))
+
+  return { sx, sy, sw: Math.min(sw, imgW - sx), sh: Math.min(sh, imgH - sy) }
 }
 
 /**
  * Face-aware crop using MediaPipe FaceDetector.
  *
- * Detects the face bounding box and builds a passport-standard crop:
- *  - 35% of face height above (forehead + hair)
- *  - 80% of face height below (chin → neck → top of shoulders)
- *  - 25% face width on each side
- * Then adjusts to exact 35:45 aspect ratio.
+ * Passport photo standard (35×45mm, 300 dpi):
+ *  • Face (chin → crown of hair) = ~70 % of photo height
+ *  • Top of image → top of hair  = ~10 % of photo height
+ *  • Chin → bottom of image       = ~20 % of photo height
+ *
+ * MediaPipe's bounding box covers approximately the forehead → chin region
+ * (it does NOT include hair above the head).  To account for hair we add
+ * ≈ 65 % of the face-box height as padding above the box.
+ *
+ * Aspect ratio is enforced by expanding WIDTH symmetrically — we never
+ * extend the bottom of the crop to fix ratio, which would drag the body in.
  */
 async function calculateFaceAwareCrop(
   img: HTMLImageElement
 ): Promise<{ sx: number; sy: number; sw: number; sh: number }> {
   const imgW = img.naturalWidth
   const imgH = img.naturalHeight
-  const targetRatio = TARGET_W / TARGET_H
+  const targetRatio = TARGET_W / TARGET_H   // 35/45 ≈ 0.778
 
   try {
     const detector = await getFaceDetector()
@@ -103,42 +130,62 @@ async function calculateFaceAwareCrop(
 
     if (result.detections.length > 0) {
       const box = result.detections[0].boundingBox!
+      const faceH = box.height
+      const faceW = box.width
 
-      // Passport padding around detected face box
-      // padTop: hair above eyebrows + small gap; padBottom: chin + short neck only
-      const padTop    = box.height * 0.35  // forehead + hair
-      const padBottom = box.height * 0.25  // chin + short neck — NO body
-      const padSide   = box.width  * 0.20  // left/right margins
+      // ── Passport padding ──────────────────────────────────────────────────
+      // MediaPipe box starts at ~forehead level (not top of hair).
+      // Hair typically adds ~65 % of face-box height above the box.
+      // We also need a small top gap (~5 % photo height = ~7 % of faceH for
+      // typical portraits) so we bump padTop a bit more.
+      const padTop    = faceH * 0.72   // room for hair above the bounding box
+      const padBottom = faceH * 0.20   // chin + very short neck — NO torso
+      const padSide   = faceW * 0.28   // horizontal breathing room
 
-      let cropTop    = Math.max(0, box.originY - padTop)
-      let cropBottom = Math.min(imgH, box.originY + box.height + padBottom)
-      let cropLeft   = Math.max(0, box.originX - padSide)
-      let cropRight  = Math.min(imgW, box.originX + box.width + padSide)
+      let cropTop    = box.originY - padTop
+      let cropBottom = box.originY + faceH + padBottom
+      let cropLeft   = box.originX - padSide
+      let cropRight  = box.originX + faceW + padSide
 
-      let cropW = cropRight - cropLeft
+      // Clamp vertically to the image
+      cropTop    = Math.max(0, cropTop)
+      cropBottom = Math.min(imgH, cropBottom)
+
       let cropH = cropBottom - cropTop
+      let cropW = cropRight - cropLeft
 
-      // Enforce 35:45 passport aspect ratio
-      if (cropW / cropH > targetRatio) {
-        // Wider than needed → expand height downward to fit ratio
-        const newH = cropW / targetRatio
-        cropBottom = Math.min(imgH, cropTop + newH)
-        cropH = cropBottom - cropTop
+      // ── Enforce 35:45 aspect ratio ────────────────────────────────────────
+      // Always adjust WIDTH around the horizontal face centre.
+      // Never extend cropBottom (that would pull body into the frame).
+      const faceCentreX = box.originX + faceW / 2
+      const requiredW   = cropH * targetRatio
+
+      cropLeft  = faceCentreX - requiredW / 2
+      cropRight = faceCentreX + requiredW / 2
+
+      // If the required width exceeds the image, clamp and shrink height to match
+      if (cropLeft < 0 || cropRight > imgW) {
+        cropLeft  = Math.max(0, cropLeft)
+        cropRight = Math.min(imgW, cropRight)
+        cropW     = cropRight - cropLeft
+        // Re-derive height from the now-clamped width (keep top, shorten bottom)
+        cropH     = cropW / targetRatio
+        cropBottom = Math.min(imgH, cropTop + cropH)
+        cropH     = cropBottom - cropTop
       } else {
-        // Taller than needed → expand width symmetrically around face center
-        const newW = cropH * targetRatio
-        const centerX = (cropLeft + cropRight) / 2
-        cropLeft  = Math.max(0, centerX - newW / 2)
-        cropRight = Math.min(imgW, centerX + newW / 2)
         cropW = cropRight - cropLeft
       }
 
-      console.log('[face-detect] ✓ Face detected — smart passport crop applied')
+      console.log(
+        `[face-detect] ✓ Face detected — passport crop box=(${Math.round(box.originX)},${Math.round(box.originY)} ${Math.round(faceW)}×${Math.round(faceH)})` +
+        ` crop=(${Math.round(cropLeft)},${Math.round(cropTop)} ${Math.round(cropW)}×${Math.round(cropH)})`
+      )
+
       return {
-        sx: Math.round(cropLeft),
-        sy: Math.round(cropTop),
-        sw: Math.round(cropW),
-        sh: Math.round(cropH),
+        sx: Math.round(Math.max(0, cropLeft)),
+        sy: Math.round(Math.max(0, cropTop)),
+        sw: Math.round(Math.min(cropW, imgW)),
+        sh: Math.round(Math.min(cropH, imgH)),
       }
     }
 

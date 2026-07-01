@@ -65,6 +65,16 @@ export async function enhancePassportImageSharp(
  * Crop and enhance a user-supplied photo (server-side fallback).
  * Client-side processing in photo-processor-browser.ts is preferred.
  * This is used only when the browser route hits the API endpoint directly.
+ *
+ * Passport standard: 35×45mm @ 300 dpi (413×531 px)
+ *   • Face height (chin→crown) ≈ 70 % of photo height
+ *   • Top margin (above hair)  ≈ 10 % of photo height
+ *   • Bottom margin (below chin)≈ 20 % of photo height
+ *
+ * On a typical portrait submission the subject stands against a plain
+ * background and fills the upper ~40 % of the frame vertically.
+ * We therefore take the top 45 % of image height, centred horizontally
+ * at 65 % width, then enforce the exact 35:45 aspect ratio.
  */
 export async function cropAndEnhancePhotoSharp(
   fileBuffer: Buffer,
@@ -73,45 +83,43 @@ export async function cropAndEnhancePhotoSharp(
   const fallbackDataUrl = `data:${mimeType};base64,${fileBuffer.toString('base64')}`;
 
   try {
-    // Get image metadata to calculate passport crop
     const meta = await sharp(fileBuffer).rotate().metadata();
     const imgW = meta.width  ?? 0;
     const imgH = meta.height ?? 0;
 
     if (!imgW || !imgH) throw new Error('Could not read image dimensions');
 
-    // Heuristic crop: centre 65% width, upper 45% height (head+short neck only)
-    const cropW = Math.floor(imgW * 0.65);
-    const cropH = Math.floor(imgH * 0.45);
-    const cropX = Math.floor((imgW - cropW) / 2);
-    const cropY = Math.floor(imgH * 0.01);
+    const ASPECT = 35 / 45;  // ≈ 0.778
 
-    // Passport aspect 35:45 — adjust crop dimensions
-    const ASPECT = 35 / 45;
-    let finalW = cropW;
-    let finalH = cropH;
+    // ── Step 1: derive an initial crop height so the face fills ~70 % ──────
+    // The head-and-shoulders region on a standing portrait is roughly the
+    // top 40 % of the frame.  We use 42 % to allow a small bottom margin.
+    const initH = Math.floor(imgH * 0.42);
+    const initW = Math.floor(initH * ASPECT);  // maintain target ratio
 
-    if (cropW / cropH > ASPECT) {
-      finalH = Math.floor(cropW / ASPECT);
-    } else {
-      finalW = Math.floor(cropH * ASPECT);
-    }
+    // ── Step 2: centre horizontally; start 4 % from the top ─────────────
+    const cropX = Math.max(0, Math.floor((imgW - initW) / 2));
+    const cropY = Math.floor(imgH * 0.04);  // small top margin
 
-    // Clamp to image bounds
-    const safeW = Math.min(finalW, imgW - cropX);
-    const safeH = Math.min(finalH, imgH - cropY);
+    // ── Step 3: clamp to image bounds ───────────────────────────────────
+    const safeW = Math.min(initW, imgW - cropX);
+    const safeH = Math.min(initH, imgH - cropY);
+
+    if (safeW < 10 || safeH < 10) throw new Error('Computed crop region too small');
 
     const enhanced = await sharp(fileBuffer)
-      .rotate()
+      .rotate()                                           // honour EXIF rotation
       .toColorspace('srgb')
       .extract({ left: cropX, top: cropY, width: safeW, height: safeH })
-      .resize({ width: 413, height: 531, fit: 'cover' }) // 35×45mm @ 300dpi
-      .linear(1.10, 8)
+      .resize({ width: 413, height: 531, fit: 'fill' })  // 35×45mm @ 300 dpi
+      .linear(1.10, 8)                                    // brightness + contrast
       .sharpen({ sigma: 1.2, m1: 0.5, m2: 0.5 })
       .jpeg({ quality: 92, mozjpeg: true })
       .toBuffer();
 
-    console.log('[sharp-crop] ✓ Cropped + enhanced photo');
+    console.log(
+      `[sharp-crop] ✓ Cropped + enhanced photo — extract=(${cropX},${cropY} ${safeW}×${safeH})`,
+    );
 
     return {
       dataUrl: `data:image/jpeg;base64,${enhanced.toString('base64')}`,
