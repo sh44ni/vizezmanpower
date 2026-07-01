@@ -3,7 +3,7 @@ import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import bcrypt from 'bcryptjs'
 import { config } from 'dotenv'
-config({ path: '.env.local' })
+config({ path: '.env' })
 config()
 
 const pool = new Pool({
