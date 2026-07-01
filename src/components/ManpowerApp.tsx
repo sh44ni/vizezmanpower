@@ -4,7 +4,12 @@ import React, { useState, useCallback } from "react";
 import ManualVisaModule from "@/components/ManualVisaModule";
 import type { LogEntry } from "@/app/types";
 
-export default function ManpowerApp() {
+interface Props {
+  usedCount?: number;
+  limit?: number | null;
+}
+
+export default function ManpowerApp({ usedCount = 0, limit = null }: Props) {
   const [logs, setLogs] = useState<LogEntry[]>([]);
 
   const addLog = useCallback((level: LogEntry["level"], message: string) => {
@@ -17,6 +22,8 @@ export default function ManpowerApp() {
       logs={logs}
       addLog={addLog}
       onStepChange={() => {}}
+      usedCount={usedCount}
+      limit={limit}
     />
   );
 }

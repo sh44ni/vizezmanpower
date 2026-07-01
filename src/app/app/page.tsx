@@ -5,9 +5,8 @@ import ManpowerApp from '@/components/ManpowerApp'
 
 /**
  * /app — The main manpower processing application.
- * Requires an active session AND an active plan.
- * If no session → redirect to login.
- * If session but no active plan → redirect to dashboard to upgrade.
+ * Passes quota info (usedCount, limit) down to the client so it can
+ * enforce limits without an extra API round-trip.
  */
 export default async function AppPage() {
   const session = await getSession()
@@ -21,5 +20,13 @@ export default async function AppPage() {
   if (!user) redirect('/login?redirect=/app')
   if (!user.isActive || !user.plan) redirect('/dashboard')
 
-  return <ManpowerApp />
+  const currentMonth = new Date().toISOString().slice(0, 7)
+  const usage = await db.submissionUsage.findUnique({
+    where: { userId_month: { userId: user.id, month: currentMonth } },
+  })
+
+  const usedCount = usage?.count ?? 0
+  const limit = user.plan.maxSubmissionsPerMonth ?? null   // null = unlimited
+
+  return <ManpowerApp usedCount={usedCount} limit={limit} />
 }

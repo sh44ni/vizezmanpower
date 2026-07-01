@@ -10,8 +10,11 @@ function resetInput(el: HTMLInputElement | null) {
   if (el) el.value = "";
 }
 
-export default function UploadStep({ items, setItems, onNext }: any) {
+export default function UploadStep({ items, setItems, onNext, remaining }: any) {
   const { t, isRTL } = useLanguage();
+  // remaining = null → unlimited, remaining = N → only N more applicants allowed
+  const quotaLeft: number | null = remaining === null || remaining === undefined ? null : remaining;
+  const atQuotaLimit = quotaLeft !== null && items.length >= quotaLeft;
   const mainInputRef = useRef<HTMLInputElement>(null);
   const fabInputRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -69,7 +72,13 @@ export default function UploadStep({ items, setItems, onNext }: any) {
     inputEl?: HTMLInputElement | null
   ) => {
     if (!fileList || fileList.length === 0) return;
-    const files = Array.from(fileList);
+    // Quota cap: only add as many as the remaining slots allow
+    let files = Array.from(fileList);
+    if (quotaLeft !== null) {
+      const canAdd = quotaLeft - items.length;
+      if (canAdd <= 0) return; // already at limit
+      files = files.slice(0, canAdd);
+    }
     resetInput(inputEl || null);
     try {
       for (const f of files) {
@@ -232,6 +241,35 @@ export default function UploadStep({ items, setItems, onNext }: any) {
           {t('step_upload_sub')}
         </p>
       </div>
+      {/* Quota banner — only shown when a finite limit exists */}
+      {quotaLeft !== null && (
+        <div
+          className={`mb-4 flex-shrink-0 flex items-center gap-3 px-4 py-3 rounded-2xl border text-sm font-medium ${
+            atQuotaLimit
+              ? 'bg-red-500/10 border-red-500/30 text-red-400'
+              : quotaLeft <= 3
+              ? 'bg-amber-400/8 border-amber-400/25 text-amber-300'
+              : 'bg-white/[0.03] border-white/[0.07] text-white/50'
+          }`}
+        >
+          <span className="text-lg leading-none">{atQuotaLimit ? '🚫' : '📋'}</span>
+          <span>
+            {atQuotaLimit
+              ? (isRTL ? 'لقد وصلت إلى الحد الأقصى لحصتك' : `Quota limit reached (${quotaLeft} slots used)`)
+              : (isRTL ? `متبقٍ ${quotaLeft} طلب من حصتك هذا الشهر` : `${quotaLeft} slot${quotaLeft !== 1 ? 's' : ''} remaining this month`)}
+          </span>
+          {atQuotaLimit && (
+            <a
+              href="https://wa.me/923178328164?text=Hi%2C%20I%20need%20more%20submission%20slots%20on%20Vizez%20Manpower"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="ms-auto text-xs font-bold text-green-400 border border-green-400/30 bg-green-400/10 px-2.5 py-1 rounded-lg hover:bg-green-400/20 transition-colors whitespace-nowrap"
+            >
+              {isRTL ? '📲 ترقية' : '📲 Upgrade'}
+            </a>
+          )}
+        </div>
+      )}
 
       {/* Scrollable list */}
       <div className="flex-1 overflow-y-auto pb-28 -mx-4 px-4 flex flex-col gap-3">
@@ -396,8 +434,8 @@ export default function UploadStep({ items, setItems, onNext }: any) {
           </div>
         ))}
 
-        {/* Add another applicant row (visible when list has items) */}
-        {items.length > 0 && (
+        {/* Add another applicant row (visible when list has items AND not at quota limit) */}
+        {items.length > 0 && !atQuotaLimit && (
           <label className="flex items-center justify-center gap-2 py-4 rounded-[18px] border border-dashed border-white/15 text-white/40 text-sm font-medium hover:border-[var(--accent)]/50 hover:text-white/70 hover:bg-white/[0.02] transition-all cursor-pointer group">
             <span className="w-7 h-7 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-[var(--accent)]/20 transition-colors">
               <Plus className="w-4 h-4 text-white/40 group-hover:text-[var(--accent)] transition-colors" />
@@ -459,8 +497,8 @@ export default function UploadStep({ items, setItems, onNext }: any) {
         )}
       </div>  {/* end scrollable */}
 
-      {/* FAB — add more (visible on mobile as floating button) */}
-      {items.length > 0 && (
+      {/* FAB — add more (visible on mobile as floating button, hidden when at quota limit) */}
+      {items.length > 0 && !atQuotaLimit && (
         <label className="fixed bottom-[110px] right-6 w-14 h-14 bg-[var(--accent)] text-white rounded-full shadow-[var(--accent-glow)] flex items-center justify-center z-40 hover:scale-105 active:scale-95 transition-transform cursor-pointer">
           <input
             type="file"
