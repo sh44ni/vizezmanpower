@@ -73,6 +73,14 @@ CRITICAL RULES:
 - Gender: output only "M" or "F".
 - Missing/unreadable fields: use "UNREADABLE".
 
+DATE EXTRACTION — READ CAREFULLY:
+- "issue_date" is the date the passport was ISSUED (Date of Issue / Date Issued). It is ALWAYS in the past.
+- "expiry_date" is the date the passport EXPIRES (Date of Expiry / Valid Until). It is ALWAYS after the issue date.
+- "date_of_birth" is the holder's birthday. It is ALWAYS before both issue and expiry dates.
+- Do NOT swap these dates. If you are unsure which date is which, use "UNREADABLE" rather than guessing.
+- The issue_date MUST be earlier (older) than expiry_date. If what you read for issue_date is later than expiry_date, you have them swapped — re-read carefully.
+- Myanmar passports: the issue date is labelled "Date of Issue" and the expiry date is labelled "Date of Expiry" on the personal data page. Both use Gregorian calendar DD/MM/YYYY format.
+
 Return ONLY a valid JSON object with these exact fields:
 {
   "surname": "",
@@ -226,6 +234,18 @@ function formatDDMMYYYY(d: Date): string {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const yyyy = d.getFullYear();
   return `${dd}/${mm}/${yyyy}`;
+}
+
+/** Parse a DD/MM/YYYY string into a Date, or null if invalid. */
+function parseDDMMYYYY(s: string): Date | null {
+  if (!s) return null;
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!m) return null;
+  const dd = parseInt(m[1], 10);
+  const mm = parseInt(m[2], 10);
+  const yyyy = parseInt(m[3], 10);
+  if (mm < 1 || mm > 12 || dd < 1 || dd > 31 || yyyy < 1900 || yyyy > 2100) return null;
+  return new Date(yyyy, mm - 1, dd);
 }
 
 function mrzCheckDigit(input: string): number {
@@ -382,8 +402,27 @@ export async function POST(req: NextRequest) {
       rawPassportData.passport_number = mrz.passportNumber;
     }
 
+    // ── Date sanity validation for issue_date (no MRZ anchor available) ──
+    const expiryForValidation = parseDDMMYYYY(rawPassportData.expiry_date);
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+
+    if (rawPassportData.issue_date) {
+      const issueParsed = parseDDMMYYYY(rawPassportData.issue_date);
+      if (!issueParsed) {
+        mrzLog.push(`ISSUE_DATE: unparseable "${rawPassportData.issue_date}" — cleared`);
+        delete rawPassportData.issue_date;
+      } else if (issueParsed > today) {
+        mrzLog.push(`ISSUE_DATE: "${rawPassportData.issue_date}" is in the future — cleared`);
+        delete rawPassportData.issue_date;
+      } else if (expiryForValidation && issueParsed >= expiryForValidation) {
+        mrzLog.push(`ISSUE_DATE: "${rawPassportData.issue_date}" is on/after expiry — cleared (likely swapped)`);
+        delete rawPassportData.issue_date;
+      }
+    }
+
     if (mrzLog.length > 0) {
-      console.log('[process] MRZ corrections:', mrzLog);
+      console.log('[process] MRZ/date corrections:', mrzLog);
     }
 
     // ── 4. Clean passport data ──

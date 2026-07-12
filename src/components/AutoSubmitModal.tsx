@@ -27,7 +27,13 @@ function buildApplicantData(data: Record<string, any>) {
   return {
     txtPassportNo: data.passport_number || '',
     txtIssueDate: data.issue_date || data.date_of_issue || '',
-    txtPlaceOfIssue: (data.place_of_issue || '').substring(0, 20),
+    txtPlaceOfIssue: (() => {
+      // Prefer the issuing country name over the raw city/place string
+      const raw = data.passport_country || data.nationality || data.place_of_issue || '';
+      // Strip commas, parentheses and anything after them, then take only the first word
+      const firstWord = raw.replace(/[,()]/g, ' ').trim().split(/\s+/)[0] || '';
+      return firstWord.substring(0, 20);
+    })(),
     txtExpiryDate: data.expiry_date || data.date_of_expiry || '',
     ddlIssueCountry: data.issuing_state || '',
     ddlNationality: data.nationality || '',
@@ -37,7 +43,7 @@ function buildApplicantData(data: Record<string, any>) {
     txtThirdName: data.third_name || '',
     txtFourthName: data.fourth_name || '',
     txtMotherName: data.mother_name || 'MRS',
-    ddlGender: data.sex === 'M' ? '1' : '2',
+    ddlGender: data.gender === 'M' ? '1' : '2',
     txtDOB: data.date_of_birth || '',
     txtBirthCity: data.place_of_birth || data.nationality || 'UNKNOWN',
     ddlBirthCountry: data.nationality || '',
