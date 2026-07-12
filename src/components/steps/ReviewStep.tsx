@@ -529,7 +529,11 @@ export default function ReviewStep({ items, setItems, onClear }: any) {
         applicants={extracted.map((item: any) => ({
           data: {
             ...item.passportData,
-            ...item.workPermitData,
+            // Spread WP data but exclude `expiry_date` — WP and passport both have
+            // this key, and the WP permit-expiry must not overwrite passport expiry.
+            ...Object.fromEntries(
+              Object.entries(item.workPermitData || {}).filter(([k]) => k !== 'expiry_date')
+            ),
             _passportImageUrl: item.passportImageDataUrl,
             _workPermitImageUrl: item.workPermitImageDataUrl,
             _photoFile: item.photoFile,
